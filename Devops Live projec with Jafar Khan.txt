@@ -1,0 +1,85 @@
+https://www.youtube.com/watch?v=3D5F8ZxBMmM&ab_channel=InfoTechwithZafarKhan
+https://www.youtube.com/watch?v=YsVJd0FPoYQ&ab_channel=TechnicalCloudKnowledge
+
+     Jenkins
+1. Yum update -y
+2. amazon-linux-extras install java-openjdk11 -y
+3. wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+4. rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+5. yum install jenkins -y
+6. systemctl start jenkins
+7. systemctl enable jenkins
+8. copy the public ip:8080
+9. select "install suggested plugins"
+10. yum install git -y
+11. passwd root
+12. vi /etc/ssh/sshd_config
+13. PermitRootLogin yes (uncomment)
+14. PasswordAuthentication yes
+15. systemctl restart sshd
+16. systemctl status sshd
+16. ssh-keygen(4 times press enter)
+17. type user name and password admin
+18. save & continue and save & finish
+19. ssh-copy-id -i root@ansible private ip
+20. ssh root@ansible private ip
+password less connectivity is established from jenkins-ansible 
+21. select "New item" in jenkins page->type "demo-project" in item name->choose "Freestyle project"->ok->select "Git" under Source Code Management->copy repo URL from github "https://github.com/shahidalam-blip/first-demo.git"->Apply->got to Dashboard->Manage Jenkins->Manage Plugins->Available plugins->type ssh in search bar->select "Public Over SSH"->Install without restart->Restart Jenkins
+22. Go to Manage Jenkins->Configure System->Add "SSH Servers"->Name(jenkins)->Hostname(Jenkins private IP)->Username(root)->Passphrase / Password(root password while making ssh connection ex:123)->Test Configuration->Apply->Add "SSH Servers"->Name(ansible)->Hostname(ansible private IP)->Username(root)->Passphrase / Password(root password while making ssh connection ex:123)->Test Configuration->Apply->Save
+23. Click on "demo-project"->Configure->Select "Add build step"->Send files or execute command over SSH->Selct "SSH Server"(jenkins)->in "Exec command" rsync -avh /var/lib/jenkins/workspace/demo-project/*.html root@ansible private ip:/opt/index.html->Apply
+
+24. Select Add post-build action->Send build artifacts over SSH->in "Exec command" ansible-playbook /sourcecode/deployment.yml->Apply->Save
+
+
+
+
+     Ansible
+1. amazon-linux-extras install epel -y
+2. yum install ansible -y
+3. passwd root
+4. vi /etc/ssh/sshd_config
+5. PermitRootLogin yes (uncomment)
+6. PasswordAuthentication yes
+7. systemctl restart sshd
+8. systemctl status sshd
+9. ssh-keygen(4 times press enter)
+10. ssh-copy-id -i root@web server private ip
+11. ssh root@web server private ip
+password less connectivity is established from ansible-web server
+12. vi /etc/ansible/hosts
+13. [webserver] and webserver private ip
+14. mkdir /sourcecode
+15. cd /sourcecode
+15. We will write playbook under source directory
+vi deployment.yml
+-name: Pic file from source and push into destination
+ hosts: webserver
+ tasks: 
+    - copy:
+         src: /opt/index.html
+         dest: /var/www/html
+
+     Web  
+1. yum install httpd -y
+2. systemctl start httpd
+3. systemctl status httpd
+4. passwd root
+5. vi /etc/ssh/sshd_config
+6. PermitRootLogin yes (uncomment)
+7. PasswordAuthentication yes
+8. systemctl restart sshd
+9. systemctl status sshd
+10. cd /var/www/html/
+
+    Dev
+1. yum install git -y
+
+Github
+1. go to settings in github under first-demo
+2. select Webhooks in left side->Add webhook->payload URL(http://jenkins public ip:8080/github-webhook/) 
+3. Content type application/json
+4. go to jenkins page->click beside log out on left side->configure->Add new Token->copy the token-> apply & save and add in secret in github and click on Add webhook
+5. go to Dashboard in jenkins page->right click on demo-project->configure->Select GitHub hook trigger for GITScm polling under Build riggers->Apply->Save
+6. Click on Build Now in jenkins page
+
+Note: Either you select */main or none in Branches to build otherwise error will come
